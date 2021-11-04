@@ -28,14 +28,25 @@ def _valid_year(
     bottom: int,
     fallback_flag: Literal['top', 'bottom']
 ) -> int:
-    is_not_int = type(year) is not int
-    is_not_in_range = not bottom <= year <= top
+    is_int = type(year) is int
 
-    if any([is_not_int, is_not_in_range]):
-        if fallback_flag == 'top':
-            year = top
-        if fallback_flag == 'bottom':
-            year = bottom
+    def _fallback(year, flag):
+        if flag == 'top':
+            return top
+        if flag == 'bottom':
+            return bottom
+        return year
+
+    if is_int:
+        is_in_range = bottom <= year <= top
+        if not is_in_range:
+            year = _fallback(year, fallback_flag)
+
+    if not is_int:
+        try:
+            year = int(year)
+        except:
+            year = _fallback(year, fallback_flag)
 
     return year
 
@@ -57,10 +68,10 @@ class GSCProductSpider(CrawlSpider):
         FALLBACK_END_YEAR = date.today().year
 
         self.begin_year = _valid_year(
-            begin_year, FALLBACK_BEGIN_YEAR, FALLBACK_END_YEAR, 'bottom'
+            begin_year, FALLBACK_END_YEAR, FALLBACK_BEGIN_YEAR, 'bottom'
         )
         self.end_year = _valid_year(
-            end_year, FALLBACK_BEGIN_YEAR,  FALLBACK_END_YEAR, 'top'
+            end_year, FALLBACK_END_YEAR,  FALLBACK_BEGIN_YEAR, 'top'
         )
         self.lang = lang or GSCLang.JAPANESE
         self.category = category or GSCCategory.SCALE
