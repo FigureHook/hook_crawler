@@ -20,7 +20,8 @@ class SaveProductInDatabasePipeline:
         if spider.is_announcement_spider:
             last_release = item.release_infos.last()
             if last_release:
-                last_release.announced_at = DatetimeHelper.today()
+                if not last_release.announced_at:
+                    last_release.announced_at = DatetimeHelper.today()
         with pgsql_session():
             product: Union[Product, None] = Product.query.filter_by(
                 name=item.name,
@@ -28,12 +29,10 @@ class SaveProductInDatabasePipeline:
             ).first()
 
             if product:
-                should_be_updated = any(
-                    (
-                        not product.check_checksum(item.checksum),
-                        spider.should_force_update
-                    )
-                )
+                should_be_updated = any((
+                    not product.check_checksum(item.checksum),
+                    spider.should_force_update
+                ))
                 if should_be_updated:
                     product = ProductModelFactory.updateProduct(item, product)
                     spider.log(
