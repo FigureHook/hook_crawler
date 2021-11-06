@@ -159,9 +159,9 @@ class NativeProductSpider(CrawlSpider):
 
     def __init__(
             self,
-            category: Optional[Union[AlterCategory, str]] = None,
             begin_page: int = 1,
             end_page: Optional[int] = None,
+            category: Optional[Union[NativeCategory, str]] = None,
             force_update: bool = False,
             *arg,  **kwargs) -> None:
         super().__init__(*arg, **kwargs)

@@ -5,7 +5,8 @@ import pytest
 import requests as rq
 from figure_parser.product import Product
 from hook_crawlers.product_crawler.spiders import (AlterProductSpider,
-                                                   GSCProductSpider)
+                                                   GSCProductSpider,
+                                                   NativeProductSpider)
 from scrapy.http import HtmlResponse
 
 
@@ -88,21 +89,62 @@ class TestAlterSpider:
         results = [r for r in results]
         assert len(results)
         for r in results:
-            pattern = r"https://\w?.?alter-web\.jp/figure/\?yy=\d+.*"
-            assert re.match(pattern, r.url)
+            pattern = r"https://.*\.?alter-web\.jp/figure/\?yy=\d+.*"
             assert type(r.url) is str
+            assert re.match(pattern, r.url)
 
     def test_parsing(self, spider: AlterProductSpider):
         url = "https://www.alter-web.jp/figure/?yy=2022&mm="
         scrapy_response = make_scrapy_response(url)
         results = spider.parse(scrapy_response)
         for r in results:
-            pattern = r"https://\w+.?alter-web.jp/products/\d+"
+            pattern = r"https://.*\.?alter-web.jp/products/\d+"
             assert type(r.url) is str
             assert re.match(pattern, r.url)
 
     def test_product_parsing(self, spider: AlterProductSpider):
         url = "https://www.alter-web.jp/products/498/"
+        scrapy_response = make_scrapy_response(url)
+        result = spider.parse_product(scrapy_response)
+        [product, *_] = result
+        assert type(product) is Product
+
+
+class TestNativeSpider:
+    @pytest.fixture
+    def spider(self):
+        spider = NativeProductSpider(begin_page=1, end_page=1)
+        return spider
+
+    def test_start_request(self, spider: NativeProductSpider):
+        results = spider.start_requests()
+        results = [r for r in results]
+        assert len(results)
+        for r in results:
+            pattern = r"https://.*\.?native-web.jp/\w+?/[page/\d+]?"
+            assert type(r.url) is str
+            assert re.match(pattern, r.url)
+
+    def test_parsing(self, spider: NativeProductSpider):
+        url = "https://www.native-web.jp/creators/"
+        scrapy_response = make_scrapy_response(url)
+        results = spider.parse(scrapy_response)
+        for r in results:
+            pattern = r"https://.*\.?native-web.jp/\w+?/[page/\d+]?"
+            assert type(r.url) is str
+            assert re.match(pattern, r.url)
+
+    def test_parsing_product_url(self, spider: NativeProductSpider):
+        url = "https://www.native-web.jp/creators/"
+        scrapy_response = make_scrapy_response(url)
+        results = spider.parse(scrapy_response)
+        for r in results:
+            pattern = r"https://.*\.?native-web.jp/\w+?/[page/\d+]?"
+            assert type(r.url) is str
+            assert re.match(pattern, r.url)
+
+    def test_product_parsing(self, spider: NativeProductSpider):
+        url = "https://www.native-web.jp/creators/4891/"
         scrapy_response = make_scrapy_response(url)
         result = spider.parse_product(scrapy_response)
         [product, *_] = result
