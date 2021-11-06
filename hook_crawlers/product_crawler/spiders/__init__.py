@@ -123,10 +123,10 @@ class AlterProductSpider(CrawlSpider):
         FALLBACK_END_YEAR = date.today().year + 2
 
         self.begin_year = _valid_year(
-            begin_year, FALLBACK_BEGIN_YEAR, FALLBACK_END_YEAR, 'bottom'
+            begin_year, FALLBACK_END_YEAR, FALLBACK_BEGIN_YEAR, 'bottom'
         )
         self.end_year = _valid_year(
-            end_year, FALLBACK_BEGIN_YEAR,  FALLBACK_END_YEAR, 'top'
+            end_year, FALLBACK_END_YEAR,  FALLBACK_BEGIN_YEAR, 'top'
         )
         self.category = category or AlterCategory.FIGURE
         self._force_update = force_update

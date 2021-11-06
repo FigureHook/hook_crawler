@@ -1,10 +1,12 @@
+import re
+from datetime import date
+
 import pytest
 import requests as rq
 from figure_parser.product import Product
-from hook_crawlers.product_crawler.spiders import GSCProductSpider, _valid_year
+from hook_crawlers.product_crawler.spiders import (AlterProductSpider,
+                                                   GSCProductSpider)
 from scrapy.http import HtmlResponse
-import re
-from datetime import date
 
 
 class TestYearValidation:
@@ -37,16 +39,17 @@ class TestYearValidation:
         assert spider.begin_year == 2006
 
 
+def make_scrapy_response(url):
+    response = rq.get(url)
+    scrapy_response = HtmlResponse(body=response.content, url=url)
+    return scrapy_response
+
+
 class TestGscSpider:
     @pytest.fixture
     def spider(self):
         spider = GSCProductSpider(begin_year=2021)
         return spider
-
-    def make_scrapy_response(self, url):
-        response = rq.get(url)
-        scrapy_response = HtmlResponse(body=response.content, url=url)
-        return scrapy_response
 
     def test_start_request(self, spider: GSCProductSpider):
         results = spider.start_requests()
@@ -59,17 +62,48 @@ class TestGscSpider:
 
     def test_parsing(self, spider: GSCProductSpider):
         url = "https://www.goodsmile.info/ja/products/category/scale/announced/2021"
-        scrapy_response = self.make_scrapy_response(url)
+        scrapy_response = make_scrapy_response(url)
         results = spider.parse(scrapy_response)
         for r in results:
             pattern = r"https://www.goodsmile.info/ja/product/.*"
-            assert re.match(pattern, r.url)
             assert type(r.url) is str
+            assert re.match(pattern, r.url)
 
     def test_product_parsing(self, spider: GSCProductSpider):
         url = "https://www.goodsmile.info/ja/product/11942"
-        scrapy_response = self.make_scrapy_response(url)
+        scrapy_response = make_scrapy_response(url)
+        result = spider.parse_product(scrapy_response)
+        [product, *_] = result
+        assert type(product) is Product
+
+
+class TestAlterSpider:
+    @pytest.fixture
+    def spider(self):
+        spider = AlterProductSpider(begin_year=2021)
+        return spider
+
+    def test_start_request(self, spider: AlterProductSpider):
+        results = spider.start_requests()
+        results = [r for r in results]
+        assert len(results)
+        for r in results:
+            pattern = r"https://\w?.?alter-web\.jp/figure/\?yy=\d+.*"
+            assert re.match(pattern, r.url)
+            assert type(r.url) is str
+
+    def test_parsing(self, spider: AlterProductSpider):
+        url = "https://www.alter-web.jp/figure/?yy=2022&mm="
+        scrapy_response = make_scrapy_response(url)
         results = spider.parse(scrapy_response)
+        for r in results:
+            pattern = r"https://\w+.?alter-web.jp/products/\d+"
+            assert type(r.url) is str
+            assert re.match(pattern, r.url)
+
+    def test_product_parsing(self, spider: AlterProductSpider):
+        url = "https://www.alter-web.jp/products/498/"
+        scrapy_response = make_scrapy_response(url)
         result = spider.parse_product(scrapy_response)
         [product, *_] = result
         assert type(product) is Product
