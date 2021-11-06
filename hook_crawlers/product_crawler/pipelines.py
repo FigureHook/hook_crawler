@@ -11,18 +11,16 @@ from figure_hook.Factory.model_factory import ProductModelFactory
 from figure_hook.Helpers.datetime_helper import DatetimeHelper
 from figure_hook.Models import Product
 from figure_parser.product import Product as product_dataclass
-from scrapy.spiders.crawl import CrawlSpider
+
+from .spiders import ProductSpider
 
 
 class SaveProductInDatabasePipeline:
-    def process_item(self, item: product_dataclass, spider: CrawlSpider):
-        new_keyword = "recent"
-        if spider.name:
-            if new_keyword in spider.name:
-                last_release = item.release_infos.last()
-                if last_release:
-                    if not last_release.announced_at:
-                        last_release.announced_at = DatetimeHelper.today()
+    def process_item(self, item: product_dataclass, spider: ProductSpider):
+        if spider.is_announcement_spider:
+            last_release = item.release_infos.last()
+            if last_release:
+                last_release.announced_at = DatetimeHelper.today()
         with pgsql_session():
             product: Union[Product, None] = Product.query.filter_by(
                 name=item.name,
@@ -33,15 +31,17 @@ class SaveProductInDatabasePipeline:
                 should_be_updated = any(
                     (
                         not product.check_checksum(item.checksum),
-                        spider.force_update
+                        spider.should_force_update
                     )
                 )
                 if should_be_updated:
                     product = ProductModelFactory.updateProduct(item, product)
-                    spider.log(f"Successfully update data in {item.url} to database.", logging.INFO)
+                    spider.log(
+                        f"Successfully update data in {item.url} to database.", logging.INFO)
 
             if not product:
                 product = ProductModelFactory.createProduct(item)
-                spider.log(f"Successfully save data in {item.url} to database.", logging.INFO)
+                spider.log(
+                    f"Successfully save data in {item.url} to database.", logging.INFO)
 
         return item
