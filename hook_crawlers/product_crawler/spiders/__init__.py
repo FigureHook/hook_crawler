@@ -2,6 +2,7 @@
 #
 # Please refer to the documentation for information on how to create and manage
 # your spiders.
+from abc import ABC
 from datetime import date
 from typing import Literal, Optional, Union
 
@@ -51,7 +52,24 @@ def _valid_year(
     return year
 
 
-class GSCProductSpider(CrawlSpider):
+class ProductSpider(CrawlSpider, ABC):
+    def __init__(self, *args, **kwargs):
+        self._force_update = kwargs.pop("force_update", False)
+        self._is_announcement_spider = kwargs.pop(
+            "is_announcement_spider", False
+        )
+        super().__init__(*args, **kwargs)
+
+    @property
+    def should_force_update(self):
+        return self._force_update
+
+    @property
+    def is_announcement_spider(self):
+        return self._is_announcement_spider
+
+
+class GSCProductSpider(ProductSpider):
     name = "gsc_product"
     allowed_domains = [BrandHost.GSC]
 
@@ -60,7 +78,6 @@ class GSCProductSpider(CrawlSpider):
                  end_year: Optional[int] = None,
                  lang: Optional[Union[GSCLang, str]] = None,
                  category: Optional[Union[GSCCategory, str]] = None,
-                 force_update: bool = False,
                  *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
@@ -75,11 +92,6 @@ class GSCProductSpider(CrawlSpider):
         )
         self.lang = lang or GSCLang.JAPANESE
         self.category = category or GSCCategory.SCALE
-        self._force_update = force_update
-
-    @property
-    def force_update(self):
-        return self._force_update
 
     def start_requests(self):
         period = range(self.begin_year, self.end_year+1)
@@ -107,7 +119,7 @@ class GSCProductSpider(CrawlSpider):
         yield product
 
 
-class AlterProductSpider(CrawlSpider):
+class AlterProductSpider(ProductSpider):
     name = "alter_product"
     allowed_domains = [BrandHost.ALTER]
 
@@ -115,7 +127,6 @@ class AlterProductSpider(CrawlSpider):
                  begin_year: Optional[int] = None,
                  end_year: Optional[int] = None,
                  category: Optional[Union[AlterCategory, str]] = None,
-                 force_update: bool = False,
                  *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
@@ -129,11 +140,6 @@ class AlterProductSpider(CrawlSpider):
             end_year, FALLBACK_END_YEAR,  FALLBACK_BEGIN_YEAR, 'top'
         )
         self.category = category or AlterCategory.FIGURE
-        self._force_update = force_update
-
-    @property
-    def force_update(self):
-        return self._force_update
 
     def start_requests(self):
         period = range(self.begin_year, self.end_year+1)
@@ -153,7 +159,7 @@ class AlterProductSpider(CrawlSpider):
         yield product
 
 
-class NativeProductSpider(CrawlSpider):
+class NativeProductSpider(ProductSpider):
     name = "native_product"
     allowed_domains = [BrandHost.NATIVE]
 
@@ -162,17 +168,11 @@ class NativeProductSpider(CrawlSpider):
             begin_page: int = 1,
             end_page: Optional[int] = None,
             category: Optional[Union[NativeCategory, str]] = None,
-            force_update: bool = False,
             *arg,  **kwargs) -> None:
         super().__init__(*arg, **kwargs)
         self.category = category or NativeCategory.CREATORS
         self.begin_page = begin_page
         self.end_page = end_page
-        self._force_update = force_update
-
-    @property
-    def force_update(self):
-        return self._force_update
 
     def start_requests(self):
         url = RelativeUrl.native(
@@ -201,34 +201,3 @@ class NativeProductSpider(CrawlSpider):
         product = NativeFactory.create_product(
             response.url, page=page, is_normalized=True, speculate_announce_date=True)
         yield product
-
-
-class GSCRecentProductSpider(GSCProductSpider):
-    name = "gsc_recent"
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(begin_year=date.today().year, *args, **kwargs)
-
-
-class AlterRecentProductSpider(AlterProductSpider):
-    name = "alter_recent"
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(category=AlterCategory.ALL,
-                         begin_year=date.today().year, *args, **kwargs)
-
-
-class NativeRecentCharacterSpider(NativeProductSpider):
-    name = "native_character_recent"
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(category=NativeCategory.CHARACTERS,
-                         begin_page=1, end_page=1, *args, **kwargs)
-
-
-class NativeRecentCreatorSpider(NativeProductSpider):
-    name = "native_creator_recent"
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(category=NativeCategory.CREATORS,
-                         begin_page=1, end_page=1, *args, **kwargs)
