@@ -1,28 +1,7 @@
-import os
 import random
 
 import pytest
 from faker import Faker
-from sqlalchemy.orm import sessionmaker
-
-
-@pytest.fixture()
-def session():
-    # os.environ['POSTGRES_DATABASE'] = "figure_testing"
-
-    from figure_hook.database import PostgreSQLDB
-    from figure_hook.Models.base import Model
-
-    pgsql = PostgreSQLDB()
-    Model.metadata.drop_all(bind=pgsql.engine)
-    Session = sessionmaker(pgsql.engine)
-    with Session() as session:
-        Model.set_session(session)
-        Model.metadata.create_all(bind=pgsql.engine)
-        yield session
-
-    Model.set_session(None)  # type: ignore
-    Model.metadata.drop_all(bind=pgsql.engine)
 
 
 @pytest.fixture()

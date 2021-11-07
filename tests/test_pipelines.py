@@ -21,7 +21,7 @@ class MockProductModel:
         return self.checksum
 
 
-@pytest.mark.usefixtures("session", "product")
+@pytest.mark.usefixtures("product")
 class TestSaveDataToDBPipeline:
     pipeline = SaveProductInDatabasePipeline()
 
