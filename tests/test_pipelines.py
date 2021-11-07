@@ -25,6 +25,11 @@ class MockProductModel:
 class TestSaveDataToDBPipeline:
     pipeline = SaveProductInDatabasePipeline()
 
+    @pytest.fixture
+    def mock_db_session(self, mocker: MockerFixture):
+        mocker.patch(
+            'hook_crawlers.product_crawler.pipelines.database_session')
+
     def test_announced_date_filling(self, product: Product):
         p = fill_announced_date(product)
         release = p.release_infos.last()
@@ -49,7 +54,7 @@ class TestSaveDataToDBPipeline:
 
         assert is_product_should_be_update(p2, product, spider)  # type: ignore
 
-    def test_new_product(self, product: Product, mocker: MockerFixture):
+    def test_new_product(self, product: Product, mocker: MockerFixture, mock_db_session):
         spider = MockProductSpider(is_announcement_spider=True)
         mocker.patch(
             'hook_crawlers.product_crawler.pipelines.fetch_product', return_value=False)
@@ -63,7 +68,7 @@ class TestSaveDataToDBPipeline:
         product_creation.assert_called_once_with(product_item)
         product_update.assert_not_called()
 
-    def test_existed_product(self, product: Product, mocker: MockerFixture):
+    def test_existed_product(self, product: Product, mocker: MockerFixture, mock_db_session):
         spider = MockProductSpider(is_announcement_spider=True)
         mocker.patch(
             'hook_crawlers.product_crawler.pipelines.is_product_should_be_update', return_value=True

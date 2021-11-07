@@ -5,6 +5,7 @@
 
 import logging
 from typing import Optional
+from contextlib import contextmanager
 
 from figure_hook.database import pgsql_session
 from figure_hook.Factory.model_factory import ProductModelFactory
@@ -13,6 +14,11 @@ from figure_hook.Models import Product
 from figure_parser.product import Product as product_dataclass
 
 from .spiders import ProductSpider
+
+
+@contextmanager
+def database_session():
+    yield pgsql_session()
 
 
 def fetch_product(product_item: product_dataclass) -> Optional[Product]:
@@ -58,7 +64,7 @@ class SaveProductInDatabasePipeline:
     def process_item(self, item: product_dataclass, spider: ProductSpider):
         if spider.is_announcement_spider:
             item = fill_announced_date(item)
-        with pgsql_session():
+        with database_session():
             product = fetch_product(item)
 
             if product:
