@@ -102,7 +102,7 @@ DOWNLOADER_MIDDLEWARES = {
 
 PROXY_LIST = os.getenv(
     'PROXY_LIST',
-    '/workspace/Services/crawler/proxy-list.txt'
+    '/workspace/hook_crawlers/proxy-list.txt'
 )
 PROXY_MODE = 0
 
