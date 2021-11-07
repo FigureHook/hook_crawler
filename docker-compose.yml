@@ -6,6 +6,8 @@ services:
     image: hook_crawler
     env_file:
       - .env
+    ports:
+      - 6800:6800
     volumes:
       - .:/workspace
     working_dir: /workspace
