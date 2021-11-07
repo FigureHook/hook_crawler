@@ -4,7 +4,7 @@
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 import logging
-from typing import Union
+from typing import Optional
 
 from figure_hook.database import pgsql_session
 from figure_hook.Factory.model_factory import ProductModelFactory
@@ -15,31 +15,63 @@ from figure_parser.product import Product as product_dataclass
 from .spiders import ProductSpider
 
 
+def fetch_product(product_item: product_dataclass) -> Optional[Product]:
+    product = Product.query.filter_by(
+        name=product_item.name,
+        id_by_official=product_item.maker_id
+    ).first()
+
+    return product
+
+
+def is_product_should_be_update(
+    product_model: Product,
+    product_item: product_dataclass,
+    spider: ProductSpider
+) -> bool:
+    different_checksum = not product_model.check_checksum(
+        product_item.checksum)
+
+    is_force_update = spider.should_force_update
+
+    return different_checksum or is_force_update
+
+
+def save_product(product_item: product_dataclass):
+    ProductModelFactory.createProduct(product_item)
+
+
+def update_product(product_item: product_dataclass, product_model: Product):
+    ProductModelFactory.updateProduct(product_item, product_model)
+
+
+def fill_announced_date(product_item: product_dataclass) -> product_dataclass:
+    last_release = product_item.release_infos.last()
+    if last_release:
+        if not last_release.announced_at:
+            last_release.announced_at = DatetimeHelper.today()
+
+    return product_item
+
+
 class SaveProductInDatabasePipeline:
     def process_item(self, item: product_dataclass, spider: ProductSpider):
         if spider.is_announcement_spider:
-            last_release = item.release_infos.last()
-            if last_release:
-                if not last_release.announced_at:
-                    last_release.announced_at = DatetimeHelper.today()
+            item = fill_announced_date(item)
         with pgsql_session():
-            product: Union[Product, None] = Product.query.filter_by(
-                name=item.name,
-                id_by_official=item.maker_id
-            ).first()
+            product = fetch_product(item)
 
             if product:
-                should_be_updated = any((
-                    not product.check_checksum(item.checksum),
-                    spider.should_force_update
-                ))
+                should_be_updated = is_product_should_be_update(
+                    product, item, spider
+                )
                 if should_be_updated:
-                    product = ProductModelFactory.updateProduct(item, product)
+                    update_product(item, product)
                     spider.log(
                         f"Successfully update data in {item.url} to database.", logging.INFO)
 
             if not product:
-                product = ProductModelFactory.createProduct(item)
+                save_product(item)
                 spider.log(
                     f"Successfully save data in {item.url} to database.", logging.INFO)
 

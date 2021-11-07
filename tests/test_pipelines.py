@@ -1,12 +1,10 @@
 from datetime import date
 
 import pytest
-from figure_hook.database import pgsql_session
-from figure_hook.Factory.model_factory import ProductModelFactory
-from figure_hook.Helpers.datetime_helper import DatetimeHelper
 from figure_parser.product import Product
-from hook_crawlers.product_crawler.pipelines import \
-    SaveProductInDatabasePipeline
+from hook_crawlers.product_crawler.pipelines import (
+    SaveProductInDatabasePipeline, fill_announced_date,
+    is_product_should_be_update)
 from hook_crawlers.product_crawler.spiders import ProductSpider
 from pytest_mock import MockerFixture
 
@@ -15,37 +13,51 @@ class MockProductSpider(ProductSpider):
     name = "mocker"
 
 
+class MockProductModel:
+    def __init__(self, checksum):
+        self.checksum = checksum
+
+    def check_checksum(self, checksum):
+        return self.checksum
+
+
 @pytest.mark.usefixtures("session", "product")
 class TestSaveDataToDBPipeline:
     pipeline = SaveProductInDatabasePipeline()
 
-    def test_announcement_spider_with_no_announced_date_product(self, product: Product):
-        spider = MockProductSpider(is_announcement_spider=True)
-
-        p = self.pipeline.process_item(product, spider)
+    def test_announced_date_filling(self, product: Product):
+        p = fill_announced_date(product)
         release = p.release_infos.last()
         if release:
-            assert release.announced_at == DatetimeHelper.today()
+            assert release.announced_at
+            release.announced_at = date(2020, 11, 1)
+            p = fill_announced_date(product)
+            assert release.announced_at == date(2020, 11, 1)
 
-    def test_announcement_spider_with_announced_date_product(self, product: Product):
+    def test_should_product_be_updated(self, product: Product):
         spider = MockProductSpider(is_announcement_spider=True)
+        force_spider = MockProductSpider(force_update=True)
+        p1 = MockProductModel(True)
+        p2 = MockProductModel(False)
 
-        plr = product.release_infos.last()
-        if plr:
-            plr.announced_at = date(2020, 11, 1)
+        assert not is_product_should_be_update(
+            p1, product, spider  # type: ignore
+        )
+        assert is_product_should_be_update(
+            p1, product, force_spider  # type: ignore
+        )
 
-        p = self.pipeline.process_item(product, spider)
-        release = p.release_infos.last()
-        if release:
-            assert release.announced_at != DatetimeHelper.today()
+        assert is_product_should_be_update(p2, product, spider)  # type: ignore
 
     def test_new_product(self, product: Product, mocker: MockerFixture):
         spider = MockProductSpider(is_announcement_spider=True)
+        mocker.patch(
+            'hook_crawlers.product_crawler.pipelines.fetch_product', return_value=False)
         product_creation = mocker.patch(
-            'figure_hook.Factory.model_factory.ProductModelFactory.createProduct'
+            'hook_crawlers.product_crawler.pipelines.save_product'
         )
         product_update = mocker.patch(
-            'figure_hook.Factory.model_factory.ProductModelFactory.updateProduct'
+            'hook_crawlers.product_crawler.pipelines.update_product'
         )
         product_item = self.pipeline.process_item(product, spider)
         product_creation.assert_called_once_with(product_item)
@@ -53,14 +65,17 @@ class TestSaveDataToDBPipeline:
 
     def test_existed_product(self, product: Product, mocker: MockerFixture):
         spider = MockProductSpider(is_announcement_spider=True)
-        with pgsql_session():
-            ProductModelFactory.createProduct(product)
+        mocker.patch(
+            'hook_crawlers.product_crawler.pipelines.is_product_should_be_update', return_value=True
+        )
+        mocker.patch(
+            'hook_crawlers.product_crawler.pipelines.fetch_product', return_value=True)
 
         product_creation = mocker.patch(
-            'figure_hook.Factory.model_factory.ProductModelFactory.createProduct'
+            'hook_crawlers.product_crawler.pipelines.save_product'
         )
         product_update = mocker.patch(
-            'figure_hook.Factory.model_factory.ProductModelFactory.updateProduct'
+            'hook_crawlers.product_crawler.pipelines.update_product'
         )
         self.pipeline.process_item(product, spider)
         product_creation.assert_not_called()
