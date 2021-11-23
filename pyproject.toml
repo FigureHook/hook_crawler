@@ -12,6 +12,7 @@ Scrapy = "^2.5.1"
 scrapyd = "^1.2.1"
 scrapyd-client = "^1.2.0"
 scrapy-proxies = "^0.4"
+click = "^8.0.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
