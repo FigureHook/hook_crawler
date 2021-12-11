@@ -10,7 +10,7 @@ if [ -d "$EGGS_DIR" ]; then
     rm -r $EGGS_DIR/$p
 fi
 
-SPIDER_PROJECTS=$(python cmd.py get-project)
+SPIDER_PROJECTS=$(python _cmd.py get-project)
 for p in $SPIDER_PROJECTS;
     do
         mkdir -p $EGGS_DIR/$p
