@@ -17,4 +17,4 @@ RUN poetry config virtualenvs.create false \
 
 WORKDIR /workspace/hook_crawlers
 
-CMD /bin/bash scrapyd_start.sh
+CMD /bin/bash scrapyd_start.sh run
