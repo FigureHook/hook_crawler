@@ -17,7 +17,7 @@ for p in $SPIDER_PROJECTS;
         scrapyd-deploy --build-egg $EGGS_DIR/$p/$(date +%s).egg
     done
 
-if python cmd.py checkdb; then
+if python _cmd.py checkdb; then
     scrapyd
 else
     echo "Can't get connection with db."
