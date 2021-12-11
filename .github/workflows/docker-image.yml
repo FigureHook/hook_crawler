@@ -24,7 +24,7 @@ jobs:
     - name: Image Testing
       run: |
         docker-compose -f docker-compose.test.yml --env-file sample.env up -d
-        docker run --rm --env-file sample.env ${{ env.IMAGE_NAME }} /bin/bash scrapyd_start.sh test
+        docker run --rm --env-file sample.env ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }} /bin/bash scrapyd_start.sh test
 
     - name: Docker Login
       # You may pin to the exact commit or the version.
