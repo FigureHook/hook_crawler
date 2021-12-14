@@ -18,7 +18,8 @@ from .spiders import ProductSpider
 
 @contextmanager
 def database_session():
-    yield pgsql_session()
+    with pgsql_session() as session:
+        yield session
 
 
 def fetch_product(product_item: product_dataclass) -> Optional[Product]:
