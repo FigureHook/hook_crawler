@@ -171,8 +171,8 @@ class NativeProductSpider(ProductSpider):
             *arg,  **kwargs) -> None:
         super().__init__(*arg, **kwargs)
         self.category = category or NativeCategory.CREATORS
-        self.begin_page = begin_page
-        self.end_page = end_page
+        self.begin_page = int(begin_page)
+        self.end_page = int(end_page) if end_page else end_page
 
     def start_requests(self):
         url = RelativeUrl.native(
