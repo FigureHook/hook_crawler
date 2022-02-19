@@ -12,7 +12,7 @@ from scrapy.http import HtmlResponse
 
 class TestYearValidation:
     def test_begin_is_end(self):
-        year = 2021
+        year = date.today().year
         spider = GSCProductSpider(begin_year=year)
         assert spider.begin_year == year
         assert spider.end_year == year
