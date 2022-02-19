@@ -7,7 +7,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-figure-hook = {git = "https://github.com/FigureHook/figure_hook.git", tag = "v0.0.2"}
+figure-hook = {git = "https://github.com/FigureHook/figure_hook.git", tag = "v0.0.5"}
 Scrapy = "^2.5.1"
 scrapyd = "^1.2.1"
 scrapyd-client = "^1.2.0"
