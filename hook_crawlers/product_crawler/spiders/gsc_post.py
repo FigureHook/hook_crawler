@@ -115,13 +115,15 @@ def fetch_gsc_products_by_official_id(ids: Iterable) -> set[str]:
     products_recorded_in_db = set()
     with pgsql_session() as session:
         stmt = select(
-            Product
+            Product.url.label('url'),
+            Product.jan.label('jan'),
+            Product.id_by_official.label('id_by_official')
         ).where(
             and_(
                 Product.url.like("%goodsmile%"),
                 Product.id_by_official.in_(ids)
             )
-        )
+        ).select_from(Product)
 
         products: list[Product] = session.execute(stmt).all()
         for p in products:
