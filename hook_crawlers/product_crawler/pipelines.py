@@ -39,7 +39,7 @@ def is_product_should_be_update(
     different_checksum = not product_model.check_checksum(
         product_item.checksum)
 
-    is_force_update = spider.should_force_update
+    is_force_update = getattr(spider, 'should_force_update', False)
 
     return different_checksum or is_force_update
 
@@ -63,7 +63,12 @@ def fill_announced_date(product_item: product_dataclass) -> product_dataclass:
 
 class SaveProductInDatabasePipeline:
     def process_item(self, item: product_dataclass, spider: ProductSpider):
-        if spider.is_announcement_spider:
+        is_announcement_spider = getattr(
+            spider,
+            'is_announcement_spider',
+            False
+        )
+        if is_announcement_spider:
             item = fill_announced_date(item)
         with database_session():
             product = fetch_product(item)
