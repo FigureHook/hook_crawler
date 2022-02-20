@@ -16,40 +16,13 @@ from figure_parser.utils import RelativeUrl
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider
 
+from ..utils import valid_year as _valid_year
+
 
 def _gsc_product_link_extractor(res):
     return LinkExtractor(
         restrict_css=".hitItem:not(.shimeproduct) > .hitBox > a"
     ).extract_links(res)
-
-
-def _valid_year(
-    year,
-    top: int,
-    bottom: int,
-    fallback_flag: Literal['top', 'bottom']
-) -> int:
-    is_int = type(year) is int
-
-    def _fallback(year, flag):
-        if flag == 'top':
-            return top
-        if flag == 'bottom':
-            return bottom
-        return year
-
-    if is_int:
-        is_in_range = bottom <= year <= top
-        if not is_in_range:
-            year = _fallback(year, fallback_flag)
-
-    if not is_int:
-        try:
-            year = int(year)
-        except:
-            year = _fallback(year, fallback_flag)
-
-    return year
 
 
 class ProductSpider(CrawlSpider, ABC):
