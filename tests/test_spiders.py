@@ -7,6 +7,7 @@ from figure_parser.product import Product
 from hook_crawlers.product_crawler.spiders import (AlterProductSpider,
                                                    GSCProductSpider,
                                                    NativeProductSpider)
+from pytest_mock import MockerFixture
 from scrapy.http import HtmlResponse
 
 
@@ -76,6 +77,45 @@ class TestGscSpider:
         result = spider.parse_product(scrapy_response)
         [product, *_] = result
         assert type(product) is Product
+
+
+class TestGscDelaySpider:
+    def test_parse_delay_post(self, mocker: MockerFixture):
+        # =========mocker setting=========
+        mocker.patch(
+            "hook_crawlers.product_crawler.spiders.gsc_post.fetch_gsc_products_by_official_id",
+            new_callable=lambda: lambda x: x
+        )
+        # =========mocker setting=========
+
+        from hook_crawlers.product_crawler.spiders.gsc_post import \
+            GscDelayPostSpider
+        spider = GscDelayPostSpider(begin_year=2022)
+
+        scrapy_response = make_scrapy_response(
+            "https://www.goodsmile.info/ja/post/5280/2021%E5%B9%B41%E6%9C%88%E7%99%BA%E5%A3%B2%E4%BA%88%E5%AE%9A%E5%95%86%E5%93%81%E3%81%AE%E5%BB%B6%E6%9C%9F%E9%80%A3%E7%B5%A1%E3%81%A8%E3%81%8A%E8%A9%AB%E3%81%B3.html"
+        )
+
+        results = spider.parse_delay_post(scrapy_response)
+        results = [r for r in results]
+        assert len(results)
+        for r in results:
+            pattern = r"https://.*\.?goodsmile.info/ja/product/.*"
+            assert 'jan' in r.cb_kwargs, "Should call callback with `jan` argument."
+            assert re.match(pattern, r.url), "Not a valid url."
+            assert type(r.url) is str
+
+    def test_product_parsing(self):
+        from hook_crawlers.product_crawler.spiders.gsc_post import \
+            GscDelayPostSpider
+        spider = GscDelayPostSpider(begin_year=2022)
+        jan = '4580416923453'
+        url = "https://www.goodsmile.info/ja/product/10419"
+        scrapy_response = make_scrapy_response(url)
+        result = spider.parse_product(scrapy_response, jan=jan)
+        [product, *_] = result
+        assert type(product) is Product
+        assert product.jan == jan, "JAN didn't match with input value."
 
 
 class TestAlterSpider:
