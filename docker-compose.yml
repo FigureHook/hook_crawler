@@ -15,7 +15,6 @@ services:
     tty: true
   db:
     image: postgres:13.1
-    restart: always
     environment:
       - POSTGRES_DB=${POSTGRES_DATABASE}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
