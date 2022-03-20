@@ -45,11 +45,11 @@ def is_product_should_be_update(
 
 
 def save_product(product_item: product_dataclass):
-    ProductModelFactory.createProduct(product_item)
+    ProductModelFactory.create_product(product_item)
 
 
 def update_product(product_item: product_dataclass, product_model: Product):
-    ProductModelFactory.updateProduct(product_item, product_model)
+    ProductModelFactory.update_product(product_item, product_model)
 
 
 def fill_announced_date(product_item: product_dataclass) -> product_dataclass:
