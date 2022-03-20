@@ -84,7 +84,8 @@ class GscDelayPostSpider(CrawlSpider):
         product = GSCFactory.create_product(
             response.url,
             page=page,
-            is_normalized=True
+            is_normalized=True,
+            speculate_announce_date=True
         )
         product.jan = jan
         yield product
