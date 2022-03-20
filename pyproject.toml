@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hook_crawlers"
-version = "0.0.3"
+version = "0.0.4"
 description = ""
 authors = ["Elton Chou <plscd748@gmail.com>"]
 license = "MIT"
