@@ -80,6 +80,10 @@ class TestGscSpider:
 
 
 class TestGscDelaySpider:
+    def test_year_range_regex_transformation(self):
+        from hook_crawlers.product_crawler.spiders.gsc_post import range_to_regex
+        assert range_to_regex(2002, 2005) == r"(2002|2003|2004|2005)"
+
     def test_parse_delay_post(self, mocker: MockerFixture):
         # =========mocker setting=========
         mocker.patch(
@@ -90,7 +94,7 @@ class TestGscDelaySpider:
 
         from hook_crawlers.product_crawler.spiders.gsc_post import \
             GscDelayPostSpider
-        spider = GscDelayPostSpider(begin_year=2022)
+        spider = GscDelayPostSpider(begin_year=2022, end_year=2022)
 
         scrapy_response = make_scrapy_response(
             "https://www.goodsmile.info/ja/post/5280/2021%E5%B9%B41%E6%9C%88%E7%99%BA%E5%A3%B2%E4%BA%88%E5%AE%9A%E5%95%86%E5%93%81%E3%81%AE%E5%BB%B6%E6%9C%9F%E9%80%A3%E7%B5%A1%E3%81%A8%E3%81%8A%E8%A9%AB%E3%81%B3.html"
@@ -108,7 +112,7 @@ class TestGscDelaySpider:
     def test_product_parsing(self):
         from hook_crawlers.product_crawler.spiders.gsc_post import \
             GscDelayPostSpider
-        spider = GscDelayPostSpider(begin_year=2022)
+        spider = GscDelayPostSpider(begin_year=2022, end_year=2022)
         jan = '4580416923453'
         url = "https://www.goodsmile.info/ja/product/10419"
         scrapy_response = make_scrapy_response(url)

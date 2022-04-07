@@ -1,6 +1,6 @@
 import re
 import urllib.parse
-from typing import Iterable, Set
+from typing import Iterable, Optional, Set
 
 import scrapy
 from bs4 import BeautifulSoup
@@ -23,23 +23,35 @@ class GscDelayPostSpider(CrawlSpider):
     rules = [
         Rule(
             LinkExtractor(
-                allow=r'https://.*\.?goodsmile.info/ja/posts/category/information/date/\d+$',
-                unique=True
-            )
-        ),
-        Rule(
-            LinkExtractor(
-                allow='[' +
+                allow='(' +
                 f'{urllib.parse.quote("発売月")}|' +
                 f'{urllib.parse.quote("発売時期")}|' +
                 f'{urllib.parse.quote("発売延期")}|' +
                 f'{urllib.parse.quote("延期")}' +
-                ']',
+                ')',
                 unique=True
             ),
             callback='parse_delay_post'
         )
     ]
+
+    def __init__(self, begin_year: Optional[int] = None, end_year: Optional[int] = None, *args, **kwargs):
+        year_pattern = r"\d+"
+        if begin_year and end_year:
+            year_pattern = range_to_regex(int(begin_year), int(end_year))
+
+        rules = list(self.rules)
+        rules.append(
+            Rule(
+                LinkExtractor(
+                    allow=rf'https://.*\.?goodsmile.info/ja/posts/category/information/date/(year_pattern)$',
+                    unique=True
+                ),
+            ),
+        )
+
+        self.rules = rules
+        super().__init__(*args, **kwargs)
 
     def parse_delay_post(self, response):
         products_delayed = {}
@@ -75,7 +87,10 @@ class GscDelayPostSpider(CrawlSpider):
             yield scrapy.Request(
                 RelativeUrl.gsc(products_delayed[p_id]['url']),
                 callback=self.parse_product,
-                cb_kwargs={"jan": products_delayed[p_id]['jan']}
+                cb_kwargs={"jan": products_delayed[p_id]['jan']},
+                cookies={
+                    "age_verification_ok": "true"
+                }
             )
 
     def parse_product(self, response, jan):
@@ -110,3 +125,8 @@ def fetch_gsc_products_by_official_id(ids: Iterable) -> set[str]:
             products_recorded_in_db.add(p.id_by_official)
 
     return products_recorded_in_db
+
+
+def range_to_regex(begin: int, end: int):
+    range_pattern = r"|".join([str(num) for num in range(begin, end+1)])
+    return f"({range_pattern})"
