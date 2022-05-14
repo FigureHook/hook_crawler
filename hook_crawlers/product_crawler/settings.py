@@ -65,6 +65,8 @@ ROBOTSTXT_OBEY = False
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
+    'product_crawler.pipelines.S3ImagePipeline': 100,
+    'product_crawler.pipelines.RestoreProductFromDictPipeline': 200,
     'product_crawler.pipelines.SaveProductInDatabasePipeline': 400,
 }
 
@@ -109,3 +111,14 @@ PROXY_MODE = 0
 
 # logger settings
 LOG_LEVEL = 'INFO'
+
+IMAGES_STORE = os.getenv('AWS_S3_IMAGE_BUCKET')
+IMAGES_STORE_S3_ACL = 'public-read'
+IMAGES_URLS_FIELD = 'images'
+IMAGES_RESULT_FIELD = 'image_s3_urls'
+
+# S3 settings for image pipeline
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+# AWS_USE_SSL = True  # or True (None by default)
+# AWS_VERIFY = True  # or True (None by default)
