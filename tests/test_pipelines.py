@@ -4,7 +4,7 @@ import pytest
 from figure_parser.product import Product
 from hook_crawlers.product_crawler.pipelines import (
     SaveProductInDatabasePipeline, fill_announced_date,
-    is_product_should_be_update)
+    product_should_be_updated)
 from hook_crawlers.product_crawler.spiders import ProductSpider
 from pytest_mock import MockerFixture
 
@@ -45,14 +45,14 @@ class TestSaveDataToDBPipeline:
         p1 = MockProductModel(True)
         p2 = MockProductModel(False)
 
-        assert not is_product_should_be_update(
+        assert not product_should_be_updated(
             p1, product, spider  # type: ignore
         )
-        assert is_product_should_be_update(
+        assert product_should_be_updated(
             p1, product, force_spider  # type: ignore
         )
 
-        assert is_product_should_be_update(p2, product, spider)  # type: ignore
+        assert product_should_be_updated(p2, product, spider)  # type: ignore
 
     def test_new_product(self, product: Product, mocker: MockerFixture, mock_db_session):
         spider = MockProductSpider(is_announcement_spider=True)
@@ -71,7 +71,7 @@ class TestSaveDataToDBPipeline:
     def test_existed_product(self, product: Product, mocker: MockerFixture, mock_db_session):
         spider = MockProductSpider(is_announcement_spider=True)
         mocker.patch(
-            'hook_crawlers.product_crawler.pipelines.is_product_should_be_update', return_value=True
+            'hook_crawlers.product_crawler.pipelines.product_should_be_updated', return_value=True
         )
         mocker.patch(
             'hook_crawlers.product_crawler.pipelines.fetch_product', return_value=True)

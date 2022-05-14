@@ -4,8 +4,8 @@
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 import logging
-from typing import Optional
 from contextlib import contextmanager
+from typing import Optional
 
 from figure_hook.database import pgsql_session
 from figure_hook.Factory.model_factory import ProductModelFactory
@@ -14,6 +14,36 @@ from figure_hook.Models import Product
 from figure_parser.product import Product as product_dataclass
 
 from .spiders import ProductSpider
+
+
+class SaveProductInDatabasePipeline:
+    def process_item(self, item: product_dataclass, spider: ProductSpider):
+        """item is Product compatiable dict"""
+
+        if is_announcement_spider(spider):
+            item = fill_announced_date(item)
+
+        with database_session():
+            product = fetch_product(item)
+
+            if product:
+                if product_should_be_updated(
+                    product, item, spider
+                ):
+                    update_product(item, product)
+                    spider.log(
+                        f"Successfully update data in {item.url} to database.",
+                        logging.INFO
+                    )
+
+            if not product:
+                save_product(item)
+                spider.log(
+                    f"Successfully save data in {item.url} to database.",
+                    logging.INFO
+                )
+
+        return item
 
 
 @contextmanager
@@ -31,7 +61,7 @@ def fetch_product(product_item: product_dataclass) -> Optional[Product]:
     return product
 
 
-def is_product_should_be_update(
+def product_should_be_updated(
     product_model: Product,
     product_item: product_dataclass,
     spider: ProductSpider
@@ -61,30 +91,9 @@ def fill_announced_date(product_item: product_dataclass) -> product_dataclass:
     return product_item
 
 
-class SaveProductInDatabasePipeline:
-    def process_item(self, item: product_dataclass, spider: ProductSpider):
-        is_announcement_spider = getattr(
-            spider,
-            'is_announcement_spider',
-            False
-        )
-        if is_announcement_spider:
-            item = fill_announced_date(item)
-        with database_session():
-            product = fetch_product(item)
-
-            if product:
-                should_be_updated = is_product_should_be_update(
-                    product, item, spider
-                )
-                if should_be_updated:
-                    update_product(item, product)
-                    spider.log(
-                        f"Successfully update data in {item.url} to database.", logging.INFO)
-
-            if not product:
-                save_product(item)
-                spider.log(
-                    f"Successfully save data in {item.url} to database.", logging.INFO)
-
-        return item
+def is_announcement_spider(spider) -> bool:
+    return getattr(
+        spider,
+        'is_announcement_spider',
+        False
+    )
