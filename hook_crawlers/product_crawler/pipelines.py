@@ -29,8 +29,8 @@ class RestoreProductFromDictPipeline:
     """
 
     def process_item(self, item: Dict, spider):
-        from .settings import IMAGES_RESULT_FIELD
-        item = replace_images_urls_to_s3_urls(item, IMAGES_RESULT_FIELD)
+        item = replace_images_urls_to_s3_urls(
+            item, spider.settings.get('IMAGES_RESULT_FIELD'))
         return from_dict(data_class=product_dataclass, data=item)
 
 
@@ -44,7 +44,8 @@ def replace_images_urls_to_s3_urls(product_compatible_item: D_T, s3_url_field: s
             s3_url_mapping[s3_item['url']] = s3_item['path']
 
         for index, url in enumerate(product_compatible_item['images']):
-            product_compatible_item['images'][index] = s3_url_mapping[url]
+            product_compatible_item['images'][index] = s3_url_mapping.get(
+                url, url)
 
     return product_compatible_item
 
