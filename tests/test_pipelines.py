@@ -5,7 +5,7 @@ from figure_parser.product import Product
 from hook_crawlers.product_crawler.pipelines import (
     RestoreProductFromDictPipeline, SaveProductInDatabasePipeline,
     fill_announced_date, product_should_be_updated,
-    replace_images_urls_to_s3_urls)
+    replace_images_urls_to_s3_paths)
 from hook_crawlers.product_crawler.spiders import ProductSpider
 from pytest_mock import MockerFixture
 
@@ -90,13 +90,20 @@ class TestSaveDataToDBPipeline:
 
 @pytest.mark.usefixtures("product")
 class TestRestoreProductFromDictPipeline:
+
     pipeline = RestoreProductFromDictPipeline()
 
+    class MockS3ImageSpider(MockProductSpider):
+        from hook_crawlers.product_crawler.settings import IMAGES_RESULT_FIELD
+        settings = {
+            'IMAGES_RESULT_FIELD': IMAGES_RESULT_FIELD
+        }
+
     def test_result_item_type(self, product: Product, mocker: MockerFixture):
-        spider = MockProductSpider()
+        spider = self.MockS3ImageSpider()
         item = product.as_dict()
         mocker.patch(
-            'hook_crawlers.product_crawler.pipelines.replace_images_urls_to_s3_urls', return_value=item
+            'hook_crawlers.product_crawler.pipelines.replace_images_urls_to_s3_paths', return_value=item
         )
         result = self.pipeline.process_item(item, spider)
 
@@ -112,6 +119,6 @@ class TestRestoreProductFromDictPipeline:
             ]
         }
 
-        product = replace_images_urls_to_s3_urls(product, IMAGES_RESULT_FIELD)
+        product = replace_images_urls_to_s3_paths(product, IMAGES_RESULT_FIELD)
 
         assert product['images'] == ['kappa@s3', 'keepo@s3']
