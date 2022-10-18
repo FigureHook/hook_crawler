@@ -13,6 +13,7 @@ dumps/
 drawio/
 redis_data/
 dist/
+temp/
 
 .env
 deploy.env

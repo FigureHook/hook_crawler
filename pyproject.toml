@@ -7,7 +7,6 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-figure-hook = {git = "https://github.com/FigureHook/figure_hook.git", tag = "v0.1.1"}
 Scrapy = "^2.5.1"
 scrapyd = "^1.2.1"
 scrapyd-client = "^1.2.0"
@@ -15,13 +14,55 @@ scrapy-proxies = "^0.4"
 click = "^8.0.3"
 Pillow = "^9.1.0"
 boto3 = "^1.22.12"
-dacite = "^1.6.0"
+figure-parser = {git = "https://github.com/FigureHook/figure_parser.git", rev = "main"}
+figure-hook-client = {git = "https://github.com/FigureHook/hook-api-client.git", subdirectory = "python/figure-hook-client"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
 pytest-mock = "^3.6.1"
 Faker = "^9.8.0"
+black = "^22.8.0"
+pre-commit = "^2.20.0"
+isort = "^5.10.1"
+flake8 = "^5.0.4"
+coverage = "^6.4.4"
+types-pytz = "^2022.2.1"
+mypy = "^0.971"
+
+[tool.poetry.group.dev.dependencies]
+pydantic-factories = "^1.9.0"
+types-requests = "^2.28.11.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+junit_family = "xunit2"
+addopts = "-ra -q"
+testpaths = ["tests"]
+
+[tool.mypy]
+exclude = ["hook_crawlers/libs/model.py"]
+ignore_missing_imports = true
+
+[tool.isort]
+profile = "black"
+src_paths = ["hook_crawlers", "tests"]
+
+[tool.black]
+extend-ignore = "E203"
+
+[tool.coverage.run]
+omit = ["*/site-packages/*", "*/tests/*", "*/test/*", "api_client/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "@abstract",
+    "@overload",
+    "pass",
+    "raise NotImplementedError",
+]

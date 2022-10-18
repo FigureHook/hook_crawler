@@ -4,7 +4,6 @@
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 # useful for handling different item types with a single interface
-from itemadapter import ItemAdapter, is_item
 from scrapy import signals
 
 
@@ -52,7 +51,7 @@ class GscCrawlerSpiderMiddleware:
             yield r
 
     def spider_opened(self, spider):
-        spider.logger.info('Spider opened: %s' % spider.name)
+        spider.logger.info("Spider opened: %s" % spider.name)
 
 
 class GscCrawlerDownloaderMiddleware:
@@ -99,4 +98,4 @@ class GscCrawlerDownloaderMiddleware:
         pass
 
     def spider_opened(self, spider):
-        spider.logger.info('Spider opened: %s' % spider.name)
+        spider.logger.info("Spider opened: %s" % spider.name)

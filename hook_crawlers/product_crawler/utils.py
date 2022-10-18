@@ -2,17 +2,14 @@ from typing import Literal
 
 
 def valid_year(
-    year,
-    top: int,
-    bottom: int,
-    fallback_flag: Literal['top', 'bottom']
+    year, top: int, bottom: int, fallback_flag: Literal["top", "bottom"]
 ) -> int:
     is_int = type(year) is int
 
     def _fallback(year, flag):
-        if flag == 'top':
+        if flag == "top":
             return top
-        if flag == 'bottom':
+        if flag == "bottom":
             return bottom
         return year
 
@@ -24,7 +21,7 @@ def valid_year(
     if not is_int:
         try:
             year = int(year)
-        except:
+        except (ValueError, TypeError):
             year = _fallback(year, fallback_flag)
 
     return year

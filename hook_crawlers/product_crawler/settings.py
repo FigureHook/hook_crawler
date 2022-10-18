@@ -9,10 +9,10 @@ import os
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'product_crawler'
+BOT_NAME = "product_crawler"
 
-SPIDER_MODULES = ['product_crawler.spiders']
-NEWSPIDER_MODULE = 'product_crawler.spiders'
+SPIDER_MODULES = ["product_crawler.spiders"]
+NEWSPIDER_MODULE = "product_crawler.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -65,9 +65,10 @@ ROBOTSTXT_OBEY = False
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'product_crawler.pipelines.S3ImagePipeline': 100,
-    'product_crawler.pipelines.RestoreProductFromDictPipeline': 200,
-    'product_crawler.pipelines.SaveProductInDatabasePipeline': 400,
+    # 'product_crawler.pipelines.S3ImagePipeline': 100,
+    # "scrapy.pipelines.images.ImagesPipeline": 150,
+    # "product_crawler.pipelines.RestoreProductFromDictPipeline": 200,
+    "product_crawler.pipelines.SaveProductInDatabasePipeline": 400,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -97,28 +98,27 @@ RETRY_TIMES = 5
 RETRY_HTTP_CODES = [500, 503, 504, 400, 403, 404, 408]
 
 DOWNLOADER_MIDDLEWARES = {
-    'scrapy.downloadermiddlewares.retry.RetryMiddleware': 90,
-    'scrapy_proxies.RandomProxy': 100,
-    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 110,
+    "scrapy.downloadermiddlewares.retry.RetryMiddleware": 90,
+    "scrapy_proxies.RandomProxy": 100,
+    "scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware": 110,
 }
 
-PROXY_LIST = os.getenv(
-    'PROXY_LIST',
-    '/workspace/hook_crawlers/proxy-list.txt'
-)
+PROXY_LIST = os.getenv("PROXY_LIST", "proxy-list.txt")
 PROXY_MODE = 0
 
 
 # logger settings
-LOG_LEVEL = 'INFO'
+LOG_LEVEL = "INFO"
 
-IMAGES_STORE = os.getenv('AWS_S3_IMAGE_BUCKET')
-IMAGES_STORE_S3_ACL = 'public-read'
-IMAGES_URLS_FIELD = 'images'
-IMAGES_RESULT_FIELD = 'image_s3_urls'
+IMAGES_STORE = os.getenv("AWS_S3_IMAGE_BUCKET")
+IMAGES_STORE_S3_ACL = "public-read"
+IMAGES_URLS_FIELD = "images"
+IMAGES_RESULT_FIELD = "image_s3_urls"
 
 # S3 settings for image pipeline
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 # AWS_USE_SSL = True  # or True (None by default)
 # AWS_VERIFY = True  # or True (None by default)
+HOOK_API_HOST = os.getenv("HOOK_API_HOST", "http://localhost:8000")
+HOOK_API_ACCESS_TOKEN = os.getenv("HOOK_API_ACCESS_TOKEN", "token")
