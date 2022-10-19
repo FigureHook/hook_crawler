@@ -40,9 +40,14 @@ def test_ignore_case():
         in ReleaseUsecase.get_release_comparing_results(release, db_release)
     )
 
+    release.release_date = date(1999, 9, 9)
+    assert (
+        ReleaseComparingResult.IGNORE
+        in ReleaseUsecase.get_release_comparing_results(release, db_release)
+    )
+
 
 def test_date_change_case():
-
     release = Release(
         release_date=date(2222, 2, 1),
     )

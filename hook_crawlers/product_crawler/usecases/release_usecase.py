@@ -5,6 +5,8 @@ from typing import List, Set, Union
 from figure_hook_client.models import ProductReleaseInfoInDB, ProductReleaseInfoUpdate
 from figure_parser import Release
 
+from ..libs.helpers import JapanDatetimeHelper
+
 
 class ReleaseComparingResult(Enum):
 
@@ -32,7 +34,7 @@ class ReleaseUsecase:
     def get_release_comparing_results(
         in_release: Release, db_release: ProductReleaseInfoInDB
     ) -> List[ReleaseComparingResult]:
-        results = []
+        results: List[ReleaseComparingResult] = []
         if db_release.shipped_at:
             results.append(ReleaseComparingResult.IGNORE)
 
@@ -42,6 +44,12 @@ class ReleaseUsecase:
         )
         if db_release_date == in_release.release_date:
             results.append(ReleaseComparingResult.IGNORE)
+
+        if in_release.release_date:
+            # if incoming release-date is less than `today` that means the release has already shipped out.
+            # The releass information should not be changed without administrator's confirmation.
+            if in_release.release_date <= JapanDatetimeHelper.today():
+                results.append(ReleaseComparingResult.IGNORE)
 
         if in_release.release_date != db_release_date:
             results.append(ReleaseComparingResult.DATE_CHANGE)
