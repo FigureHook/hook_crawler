@@ -227,7 +227,7 @@ class TestAmakuniSpider:
 
     def test_start_request(self, spider: AmakuniProductSpider):
         results = spider.start_requests()
-        url_pattern = r"http://amakuni\.info/item/item\d+\.php"
+        url_pattern = r"http://amakuni.info/index.php"
         for r in results:
             assert re.match(url_pattern, r.url)
 

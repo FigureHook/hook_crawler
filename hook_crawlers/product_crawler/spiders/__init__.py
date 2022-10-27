@@ -21,6 +21,7 @@ from figure_parser.factories import GeneralBs4ProductFactory
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider
 
+from ..libs.helpers import JapanDatetimeHelper
 from ..utils import valid_year as _valid_year
 
 general_factory = GeneralBs4ProductFactory.create_factory()
@@ -219,29 +220,63 @@ class AmakuniProductSpider(ProductSpider):
     name = "amakuni_product"
     allowed_domains = [BrandHost.AMAKUNI]
 
+    FALLBACK_BEGIN_YEAR = 2012
+    FALLBACK_END_YEAR = JapanDatetimeHelper.today().year
+
     begin_year: int
-    end_year: int
+    end_year: Optional[int]
 
     def __init__(
         self, begin_year: int = 2012, end_year: Optional[int] = None, *args, **kwargs
     ):
         FALLBACK_BEGIN_YEAR = 2012
-        FALLBACK_END_YEAR = date.today().year
-
-        end_year = end_year or FALLBACK_END_YEAR
+        FALLBACK_END_YEAR = JapanDatetimeHelper.today().year
 
         self.begin_year = _valid_year(
             begin_year, FALLBACK_END_YEAR, FALLBACK_BEGIN_YEAR, fallback_flag="bottom"
         )
-        self.end_year = _valid_year(
-            end_year, FALLBACK_END_YEAR, FALLBACK_BEGIN_YEAR, fallback_flag="top"
-        )
+        self.end_year = end_year
         super().__init__(*args, **kwargs)
 
+    def _validate_end_year(self, end_year: int, fallback_year: int):
+        return _valid_year(
+            end_year, fallback_year, self.begin_year, fallback_flag="top"
+        )
+
     def start_requests(self):
+        url = "http://amakuni.info/index.php"
+        yield scrapy.Request(url, callback=self.parse)
+
+    def set_year_range(self, response):
+        page = BeautifulSoup(response.text, "lxml")
+        end_year_ele = page.select_one("#top_nav > .page > li > a")
+
+        fallback_end_year = self.FALLBACK_END_YEAR
+
+        if end_year_ele:
+            if end_year_ele.text.isdigit():
+                end_year = int(end_year_ele.text)
+                fallback_end_year = end_year
+
+        self.begin_year = _valid_year(
+            self.begin_year,
+            fallback_end_year,
+            self.FALLBACK_BEGIN_YEAR,
+            fallback_flag="bottom",
+        )
+        self.end_year = _valid_year(
+            self.end_year or fallback_end_year,
+            fallback_end_year,
+            self.FALLBACK_BEGIN_YEAR,
+            fallback_flag="bottom",
+        )
+
+        return range(self.begin_year, self.end_year + 1)
+
+    def parse(self, response):
+        year_range = self.set_year_range(response)
         self.logger.info(f"begine_year={self.begin_year}, end_year={self.end_year}")
-        year_period = range(self.begin_year, self.end_year + 1)
-        for year in year_period:
+        for year in year_range:
             url = f"http://amakuni.info/item/item{year}.php"
             yield scrapy.Request(url, callback=self.parse_year_page)
 
